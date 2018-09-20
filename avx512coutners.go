@@ -7,7 +7,9 @@ package main
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"log"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -74,6 +76,12 @@ func (ctx *context) init() error {
 		ext = strings.TrimSpace(ext)
 		ctx.extensions = append(ctx.extensions, ext)
 	}
+
+	absWorkDir, err := filepath.Abs(ctx.workDir)
+	if err != nil {
+		return fmt.Errorf("expand -workDir: %v", err)
+	}
+	ctx.workDir = absWorkDir
 
 	// Provide good error message to the user in case of issues.
 	switch {
