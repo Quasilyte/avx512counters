@@ -3,46 +3,8 @@ package main
 import (
 	"path/filepath"
 	"reflect"
-	"strings"
 	"testing"
 )
-
-// argumentClass returns parameter type of given argument value.
-//
-// For example:
-//	"$1" argument has type of "imm" (immediate constant),
-//	"K2" is "K" (opmask register).
-func argumentClass(arg string) string {
-	switch arg[0] {
-	case '$':
-		return "imm"
-	case 'K':
-		return "K"
-	case 'X':
-		return "X"
-	case 'Y':
-		return "Y"
-	case 'Z':
-		return "Z"
-	default:
-		if strings.Contains(arg, "(") && strings.Contains(arg, ")") {
-			return "mem"
-		}
-		return "reg"
-	}
-}
-
-func instructionForm(l testLine) string {
-	if len(l.args) == 0 {
-		return l.op
-	}
-
-	var argClasses []string
-	for _, arg := range l.args {
-		argClasses = append(argClasses, argumentClass(arg))
-	}
-	return l.op + " " + strings.Join(argClasses, ", ")
-}
 
 func TestInstructionForm(t *testing.T) {
 	tests := []struct {
@@ -93,8 +55,9 @@ func TestInstructionForm(t *testing.T) {
 }
 
 func TestScanner(t *testing.T) {
-	scanner := testFileScanner{filename: filepath.Join("testdata", "asmfile.s")}
-	if err := scanner.init(); err != nil {
+	filename := filepath.Join("testdata", "asmfile.s")
+	scanner := testFileScanner{}
+	if err := scanner.init(filename); err != nil {
 		t.Fatalf("scanner init error: %v", err)
 	}
 	expected := []testLine{
