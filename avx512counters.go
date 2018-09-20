@@ -28,6 +28,7 @@ func main() {
 		{"init context", ctx.init},
 		{"validate command-line args", ctx.validateFlags},
 		{"prepare work dir", ctx.prepareWorkDir},
+		{"visit work dir", ctx.visitWorkDir},
 	}
 
 	for _, s := range steps {
@@ -129,6 +130,10 @@ func (ctx *context) prepareWorkDir() error {
 			}
 		}`, ctx.loopCount)
 	return ioutil.WriteFile(mainFile, []byte(mainFileContents), 0666)
+}
+
+func (ctx *context) visitWorkDir() error {
+	return os.Chdir(ctx.workDir)
 }
 
 // fileExists reports whether file with given name exists.
