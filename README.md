@@ -21,7 +21,7 @@ There are 6 columns:
 5. `level1` shows `core_power.lvl1_turbo_license` hardware counter value
 6. `level2` shows `core_power.lvl2_turbo_license` hardware counter value
 
-Example line:
+Example output line:
 
 ```
 "avx512f","KANDNW K, K, K","turbo0","1249200","0","0"
