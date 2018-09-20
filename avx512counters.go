@@ -51,6 +51,12 @@ type context struct {
 	// and index register must be one of the X/Y/Z.
 	vmemArgRE *regexp.Regexp
 
+	// testDir is AVX-512 encoder end2end test suite path.
+	testDir string
+
+	// availableExt is a set of available testfiles for evaluation.
+	availableExt map[string]bool
+
 	// Fields below are initialized by command-line arguments (flags).
 
 	extensions    []string
@@ -59,9 +65,6 @@ type context struct {
 	iformSpanSize uint
 	loopCount     uint
 	perfRounds    uint
-
-	testDir      string
-	availableExt map[string]bool
 }
 
 func (ctx *context) init() error {
