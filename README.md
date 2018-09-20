@@ -27,7 +27,7 @@ Example output line:
 "avx512f","KANDNW K, K, K","turbo0","1249200","0","0"
 ```
 
-Example of the complete output is provided in [avx512_core_i9_7000x.csv](/avx512_core_i9_7000x.csv) file.
+Example of the complete output is provided in [avx512_core_i9_7900x.csv](/avx512_core_i9_7900x.csv) file.
 
 > **Disclaimer**: provided example is not a reliable reference. The results may vary between
 > collector runs, execution on different machines may lead to other results as well.
