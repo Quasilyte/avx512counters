@@ -58,10 +58,14 @@ type collector struct {
 	// availableExt is a set of available testfiles for evaluation.
 	availableExt map[string]bool
 
+	// stats is a combined list of collected statistics.
+	stats []*iformStats
+
 	// current holds evaluation state which is valid only
 	// during single extension evaluation stage.
 	current struct {
 		extension string
+		scanner   testFileScanner
 	}
 
 	// Fields below are initialized by command-line arguments (flags).
@@ -191,17 +195,29 @@ func (c *collector) visitWorkDir() error {
 
 func (c *collector) collectCounters() error {
 	for _, ext := range c.extensions {
-		c.current.extension = ext
-
 		filename := filepath.Join(c.testDir, ext+".s")
-		scanner := testFileScanner{filename: filename}
-		if err := scanner.init(); err != nil {
+
+		c.current.extension = ext
+		c.current.scanner = testFileScanner{filename: filename}
+		if err := c.current.scanner.init(); err != nil {
 			log.Printf("skip %s: can't scan test file: %v", ext, err)
 			continue
 		}
+
+		stats, err := c.evaluateCurrent()
+		if err != nil {
+			log.Printf("failed %s: %v", ext, err)
+			continue
+		}
+
+		c.stats = append(c.stats, stats...)
 	}
 
 	return nil
+}
+
+func (c *collector) evaluateCurrent() ([]*iformStats, error) {
+	return nil, nil
 }
 
 // iformStats is parsed perf output for particular instruction forme evaluation.
