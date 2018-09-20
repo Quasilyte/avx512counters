@@ -187,7 +187,7 @@ func (c *collector) collectCounters() error {
 	for _, ext := range c.extensions {
 		filename := filepath.Join(c.testDir, ext+".s")
 		scanner := testFileScanner{filename: filename}
-		if err := scanner.Init(); err != nil {
+		if err := scanner.init(); err != nil {
 			log.Printf("skip %s: can't scan test file: %v", ext, err)
 			continue
 		}
@@ -196,12 +196,61 @@ func (c *collector) collectCounters() error {
 	return nil
 }
 
-type testFileScanner struct {
-	filename string
+// testLine is decoded end2end test file line.
+// Represents single instruction.
+type testLine struct {
+	op   string   // Opcode
+	args []string // Instruction arguments
+	text string   // Asm text (whole line)
 }
 
-func (s *testFileScanner) Init() error {
+// testFileScanner reads Go asm end2end test file into testLine objects.
+type testFileScanner struct {
+	filename string
+	lineRE   *regexp.Regexp
+	lines    []string // Unprocessed lines
+	line     testLine // Last decoded line
+	err      error
+}
+
+func (s *testFileScanner) init() error {
+	data, err := ioutil.ReadFile(s.filename)
+	if err != nil {
+		return err
+	}
+	s.lineRE = regexp.MustCompile(`\t(.*?) (.*?) // [0-9a-f]+`)
+	s.lines = strings.Split(string(data), "\n")
+	// Instructions lines start with "\t".
+	// Skip everything before them.
+	for len(s.lines[0]) == 0 || s.lines[0][0] != '\t' {
+		s.lines = s.lines[1:]
+	}
 	return nil
+}
+
+func (s *testFileScanner) scan() bool {
+	if s.err != nil {
+		return false
+	}
+	if len(s.lines) == 0 {
+		s.err = fmt.Errorf("%s: unexpected EOF (expected RET instruction)", s.filename)
+		return false
+	}
+	if s.lines[0] == "\tRET" {
+		return false
+	}
+	m := s.lineRE.FindStringSubmatch(s.lines[0])
+	if m == nil {
+		s.err = fmt.Errorf("%s: unexpected %q line (does not match pattern)", s.filename, s.lines[0])
+		return false
+	}
+	s.lines = s.lines[1:]
+	var args []string
+	for _, x := range strings.Split(m[2], ",") {
+		args = append(args, strings.TrimSpace(x))
+	}
+	s.line = testLine{op: m[1], args: args, text: m[0]}
+	return true
 }
 
 // fileExists reports whether file with given name exists.
