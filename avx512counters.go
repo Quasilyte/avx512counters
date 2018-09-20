@@ -58,6 +58,12 @@ type collector struct {
 	// availableExt is a set of available testfiles for evaluation.
 	availableExt map[string]bool
 
+	// current holds evaluation state which is valid only
+	// during single extension evaluation stage.
+	current struct {
+		extension string
+	}
+
 	// Fields below are initialized by command-line arguments (flags).
 
 	extensions    []string
@@ -185,6 +191,8 @@ func (c *collector) visitWorkDir() error {
 
 func (c *collector) collectCounters() error {
 	for _, ext := range c.extensions {
+		c.current.extension = ext
+
 		filename := filepath.Join(c.testDir, ext+".s")
 		scanner := testFileScanner{filename: filename}
 		if err := scanner.init(); err != nil {
