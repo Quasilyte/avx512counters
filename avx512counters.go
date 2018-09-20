@@ -244,6 +244,7 @@ func (c *collector) evaluateCurrent() ([]*iformStats, error) {
 		if err != nil {
 			log.Printf("%s: skip %s: %v", c.current.extension, iform, err)
 		} else {
+			istats.ext = c.current.extension
 			stats = append(stats, istats)
 			log.Printf("%s: collected %s", c.current.extension, iform)
 		}
