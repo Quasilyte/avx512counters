@@ -23,16 +23,16 @@ func main() {
 		fn   func() error
 	}
 
-	var ctx context
+	var c collector
 
 	steps := []step{
-		{"init context", ctx.init},
-		{"locate test dir", ctx.locateTestDir},
-		{"read extensions", ctx.readExtensions},
-		{"parse command-line args", ctx.parseFlags},
-		{"validate command-line args", ctx.validateFlags},
-		{"prepare work dir", ctx.prepareWorkDir},
-		{"visit work dir", ctx.visitWorkDir},
+		{"init collector", c.init},
+		{"locate test dir", c.locateTestDir},
+		{"read extensions", c.readExtensions},
+		{"parse command-line args", c.parseFlags},
+		{"validate command-line args", c.validateFlags},
+		{"prepare work dir", c.prepareWorkDir},
+		{"visit work dir", c.visitWorkDir},
 	}
 
 	for _, s := range steps {
@@ -42,7 +42,7 @@ func main() {
 	}
 }
 
-type context struct {
+type collector struct {
 	// memArgRE matches any kind of memory operand.
 	// Displacement and indexing expressions are optional.
 	memArgRE *regexp.Regexp
@@ -68,102 +68,102 @@ type context struct {
 	verbose       bool
 }
 
-func (ctx *context) init() error {
-	ctx.memArgRE = regexp.MustCompile(`(?:-?\d+)?\(\w+\)(?:\(\w+\*[1248]\))?`)
-	ctx.vmemArgRE = regexp.MustCompile(`(?:-?\d+)?\(\w+\)\(([XYZ])\d+\*[1248]\)`)
-	ctx.availableExt = make(map[string]bool)
+func (c *collector) init() error {
+	c.memArgRE = regexp.MustCompile(`(?:-?\d+)?\(\w+\)(?:\(\w+\*[1248]\))?`)
+	c.vmemArgRE = regexp.MustCompile(`(?:-?\d+)?\(\w+\)\(([XYZ])\d+\*[1248]\)`)
+	c.availableExt = make(map[string]bool)
 	return nil
 }
 
-func (ctx *context) locateTestDir() error {
+func (c *collector) locateTestDir() error {
 	goroot := runtime.GOROOT()
 	// The AVX-512 encoder end2end test suite path is unlikely to change.
 	// If it ever does, this should be updated.
-	ctx.testDir = filepath.Join(goroot,
+	c.testDir = filepath.Join(goroot,
 		"src", "cmd", "asm", "internal", "asm", "testdata", "avx512enc")
-	if !fileExists(ctx.testDir) {
-		return fmt.Errorf("can't locate AVX-512 testdata: %s doesn't exist", ctx.testDir)
+	if !fileExists(c.testDir) {
+		return fmt.Errorf("can't locate AVX-512 testdata: %s doesn't exist", c.testDir)
 	}
 	return nil
 }
 
-func (ctx *context) readExtensions() error {
-	files, err := ioutil.ReadDir(ctx.testDir)
+func (c *collector) readExtensions() error {
+	files, err := ioutil.ReadDir(c.testDir)
 	if err != nil {
 		return err
 	}
 
 	for _, f := range files {
 		ext := strings.TrimSuffix(f.Name(), ".s")
-		ctx.availableExt[ext] = true
+		c.availableExt[ext] = true
 	}
 
 	return nil
 }
 
-func (ctx *context) parseFlags() error {
+func (c *collector) parseFlags() error {
 	extensions := flag.String("extensions", "avx512f,avx512dq,avx512cd,avx512bw",
 		`comma-separated list of extensions to be evaluated`)
-	flag.StringVar(&ctx.perfTool, "perf", "perf",
+	flag.StringVar(&c.perfTool, "perf", "perf",
 		`perf tool binary name. ocperf and other drop-in replacements will do`)
-	flag.StringVar(&ctx.workDir, "workDir", "./avx512counters-workdir",
+	flag.StringVar(&c.workDir, "workDir", "./avx512counters-workdir",
 		`where to put results and the intermediate files`)
-	flag.UintVar(&ctx.iformSpanSize, "iformSpanSize", 100,
+	flag.UintVar(&c.iformSpanSize, "iformSpanSize", 100,
 		`how many instruction lines form a single iform span. Higher values slow down the collection`)
-	flag.UintVar(&ctx.loopCount, "loopCount", 1*1000*1000,
+	flag.UintVar(&c.loopCount, "loopCount", 1*1000*1000,
 		`how many times to execute every iform span. Higher values slow down the collection`)
-	flag.UintVar(&ctx.perfRounds, "perfRounds", 1,
+	flag.UintVar(&c.perfRounds, "perfRounds", 1,
 		`how many times to re-validate perf results. Higher values slow down the collection`)
-	flag.BoolVar(&ctx.verbose, "verbose", true,
+	flag.BoolVar(&c.verbose, "verbose", true,
 		`whether to print collection status`)
 
 	flag.Parse()
 
 	for _, ext := range strings.Split(*extensions, ",") {
 		ext = strings.TrimSpace(ext)
-		ctx.extensions = append(ctx.extensions, ext)
+		c.extensions = append(c.extensions, ext)
 	}
 
-	absWorkDir, err := filepath.Abs(ctx.workDir)
+	absWorkDir, err := filepath.Abs(c.workDir)
 	if err != nil {
 		return fmt.Errorf("expand -workDir: %v", err)
 	}
-	ctx.workDir = absWorkDir
+	c.workDir = absWorkDir
 	return nil
 }
 
-func (ctx *context) validateFlags() error {
-	for _, ext := range ctx.extensions {
-		if !ctx.availableExt[ext] {
+func (c *collector) validateFlags() error {
+	for _, ext := range c.extensions {
+		if !c.availableExt[ext] {
 			return fmt.Errorf("unavailable extension: %q", ext)
 		}
 	}
 
 	switch {
-	case len(ctx.extensions) == 0:
+	case len(c.extensions) == 0:
 		return errors.New("expected at least 1 extension name")
-	case ctx.perfTool == "":
+	case c.perfTool == "":
 		return errors.New("argument -perf can't be empty")
-	case ctx.iformSpanSize == 0:
+	case c.iformSpanSize == 0:
 		return errors.New("argument -iformSpanSize can't be 0")
-	case ctx.loopCount == 0:
+	case c.loopCount == 0:
 		return errors.New("argument -loopCount can't be 0")
-	case ctx.perfRounds == 0:
+	case c.perfRounds == 0:
 		return errors.New("argument -perfRounds can't be 0")
 	default:
 		return nil
 	}
 }
 
-func (ctx *context) prepareWorkDir() error {
-	if !fileExists(ctx.workDir) {
-		if err := os.Mkdir(ctx.workDir, 0700); err != nil {
+func (c *collector) prepareWorkDir() error {
+	if !fileExists(c.workDir) {
+		if err := os.Mkdir(c.workDir, 0700); err != nil {
 			return err
 		}
 	}
 
 	// Always overwrite the main file, just in case.
-	mainFile := filepath.Join(ctx.workDir, "main.go")
+	mainFile := filepath.Join(c.workDir, "main.go")
 	mainFileContents := fmt.Sprintf(`
 		// Code generated by avx512counters. DO NOT EDIT.
 		package main
@@ -177,12 +177,12 @@ func (ctx *context) prepareWorkDir() error {
 				}
 				avx512routine(&memory)
 			}
-		}`, ctx.loopCount)
+		}`, c.loopCount)
 	return ioutil.WriteFile(mainFile, []byte(mainFileContents), 0666)
 }
 
-func (ctx *context) visitWorkDir() error {
-	return os.Chdir(ctx.workDir)
+func (c *collector) visitWorkDir() error {
+	return os.Chdir(c.workDir)
 }
 
 // fileExists reports whether file with given name exists.
