@@ -71,7 +71,6 @@ type collector struct {
 	// current holds evaluation state which is valid only
 	// during single extension evaluation stage.
 	current struct {
-		filename  string
 		extension string
 		scanner   testFileScanner
 	}
@@ -208,10 +207,10 @@ func (c *collector) visitWorkDir() error {
 
 func (c *collector) collectCounters() error {
 	for _, ext := range c.extensions {
-		c.current.filename = filepath.Join(c.testDir, ext+".s")
+		filename := filepath.Join(c.testDir, ext+".s")
 		c.current.extension = ext
 		c.current.scanner = testFileScanner{}
-		if err := c.current.scanner.init(c.current.filename); err != nil {
+		if err := c.current.scanner.init(filename); err != nil {
 			log.Printf("skip %s: can't scan test file: %v", ext, err)
 			continue
 		}
@@ -243,10 +242,10 @@ func (c *collector) evaluateCurrent() ([]*iformStats, error) {
 		asmText := c.generateAsmText(lines)
 		istats, err := c.evaluateIform(iform, asmText)
 		if err != nil {
-			log.Printf("%s: skip %s: %v", c.current.filename, iform, err)
+			log.Printf("%s: skip %s: %v", c.current.extension, iform, err)
 		} else {
 			stats = append(stats, istats)
-			log.Printf("%s: collected %s", c.current.filename, iform)
+			log.Printf("%s: collected %s", c.current.extension, iform)
 		}
 	}
 
