@@ -196,6 +196,16 @@ func (c *collector) collectCounters() error {
 	return nil
 }
 
+// iformStats is parsed perf output for particular instruction forme evaluation.
+type iformStats struct {
+	ext   string // extension instruction belongs to
+	iform string // tested instruction form
+
+	level0 int64 // turbo0 event counter
+	level1 int64 // turbo1 event counter
+	level2 int64 // turbo2 event counter
+}
+
 // testLine is decoded end2end test file line.
 // Represents single instruction.
 type testLine struct {
