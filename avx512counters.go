@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 )
 
@@ -26,6 +27,9 @@ func main() {
 
 	steps := []step{
 		{"init context", ctx.init},
+		{"locate test dir", ctx.locateTestDir},
+		{"read extensions", ctx.readExtensions},
+		{"parse command-line args", ctx.parseFlags},
 		{"validate command-line args", ctx.validateFlags},
 		{"prepare work dir", ctx.prepareWorkDir},
 		{"visit work dir", ctx.visitWorkDir},
@@ -55,12 +59,45 @@ type context struct {
 	iformSpanSize uint
 	loopCount     uint
 	perfRounds    uint
+
+	testDir      string
+	availableExt map[string]bool
 }
 
 func (ctx *context) init() error {
 	ctx.memArgRE = regexp.MustCompile(`(?:-?\d+)?\(\w+\)(?:\(\w+\*[1248]\))?`)
 	ctx.vmemArgRE = regexp.MustCompile(`(?:-?\d+)?\(\w+\)\(([XYZ])\d+\*[1248]\)`)
+	ctx.availableExt = make(map[string]bool)
+	return nil
+}
 
+func (ctx *context) locateTestDir() error {
+	goroot := runtime.GOROOT()
+	// The AVX-512 encoder end2end test suite path is unlikely to change.
+	// If it ever does, this should be updated.
+	ctx.testDir = filepath.Join(goroot,
+		"src", "cmd", "asm", "internal", "asm", "testdata", "avx512enc")
+	if !fileExists(ctx.testDir) {
+		return fmt.Errorf("can't locate AVX-512 testdata: %s doesn't exist", ctx.testDir)
+	}
+	return nil
+}
+
+func (ctx *context) readExtensions() error {
+	files, err := ioutil.ReadDir(ctx.testDir)
+	if err != nil {
+		return err
+	}
+
+	for _, f := range files {
+		ext := strings.TrimSuffix(f.Name(), ".s")
+		ctx.availableExt[ext] = true
+	}
+
+	return nil
+}
+
+func (ctx *context) parseFlags() error {
 	extensions := flag.String("extensions", "avx512f,avx512dq,avx512cd,avx512bw",
 		`comma-separated list of extensions to be evaluated`)
 	flag.StringVar(&ctx.perfTool, "perf", "perf",
@@ -90,6 +127,12 @@ func (ctx *context) init() error {
 }
 
 func (ctx *context) validateFlags() error {
+	for _, ext := range ctx.extensions {
+		if !ctx.availableExt[ext] {
+			return fmt.Errorf("unavailable extension: %q", ext)
+		}
+	}
+
 	switch {
 	case len(ctx.extensions) == 0:
 		return errors.New("expected at least 1 extension name")
