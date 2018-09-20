@@ -33,6 +33,7 @@ func main() {
 		{"validate command-line args", c.validateFlags},
 		{"prepare work dir", c.prepareWorkDir},
 		{"visit work dir", c.visitWorkDir},
+		{"collect counters", c.collectCounters},
 	}
 
 	for _, s := range steps {
@@ -65,7 +66,6 @@ type collector struct {
 	iformSpanSize uint
 	loopCount     uint
 	perfRounds    uint
-	verbose       bool
 }
 
 func (c *collector) init() error {
@@ -114,8 +114,6 @@ func (c *collector) parseFlags() error {
 		`how many times to execute every iform span. Higher values slow down the collection`)
 	flag.UintVar(&c.perfRounds, "perfRounds", 1,
 		`how many times to re-validate perf results. Higher values slow down the collection`)
-	flag.BoolVar(&c.verbose, "verbose", true,
-		`whether to print collection status`)
 
 	flag.Parse()
 
@@ -183,6 +181,27 @@ func (c *collector) prepareWorkDir() error {
 
 func (c *collector) visitWorkDir() error {
 	return os.Chdir(c.workDir)
+}
+
+func (c *collector) collectCounters() error {
+	for _, ext := range c.extensions {
+		filename := filepath.Join(c.testDir, ext+".s")
+		scanner := testFileScanner{filename: filename}
+		if err := scanner.Init(); err != nil {
+			log.Printf("skip %s: can't scan test file: %v", ext, err)
+			continue
+		}
+	}
+
+	return nil
+}
+
+type testFileScanner struct {
+	filename string
+}
+
+func (s *testFileScanner) Init() error {
+	return nil
 }
 
 // fileExists reports whether file with given name exists.
