@@ -45,6 +45,7 @@ type context struct {
 
 	extensions    []string
 	perfTool      string
+	workDir       string
 	iformSpanSize uint
 	loopCount     uint
 	perfRounds    uint
@@ -58,6 +59,8 @@ func (ctx *context) init() error {
 		`comma-separated list of extensions to be evaluated`)
 	flag.StringVar(&ctx.perfTool, "perf", "perf",
 		`perf tool binary name. ocperf and other drop-in replacements will do`)
+	flag.StringVar(&ctx.workDir, "workDir", "./avx512counters-workdir",
+		`where to put results and the intermediate files`)
 	flag.UintVar(&ctx.iformSpanSize, "iformSpanSize", 100,
 		`how many instruction lines form a single iform span. Higher values slow down the collection`)
 	flag.UintVar(&ctx.loopCount, "loopCount", 1*1000*1000,
