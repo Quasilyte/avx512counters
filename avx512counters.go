@@ -65,6 +65,7 @@ type context struct {
 	iformSpanSize uint
 	loopCount     uint
 	perfRounds    uint
+	verbose       bool
 }
 
 func (ctx *context) init() error {
@@ -113,6 +114,8 @@ func (ctx *context) parseFlags() error {
 		`how many times to execute every iform span. Higher values slow down the collection`)
 	flag.UintVar(&ctx.perfRounds, "perfRounds", 1,
 		`how many times to re-validate perf results. Higher values slow down the collection`)
+	flag.BoolVar(&ctx.verbose, "verbose", true,
+		`whether to print collection status`)
 
 	flag.Parse()
 
