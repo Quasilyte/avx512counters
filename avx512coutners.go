@@ -24,6 +24,7 @@ func main() {
 
 	steps := []step{
 		{"init context", ctx.init},
+		{"validate command-line args", ctx.validateFlags},
 		{"prepare work dir", ctx.prepareWorkDir},
 	}
 
@@ -82,8 +83,10 @@ func (ctx *context) init() error {
 		return fmt.Errorf("expand -workDir: %v", err)
 	}
 	ctx.workDir = absWorkDir
+	return nil
+}
 
-	// Provide good error message to the user in case of issues.
+func (ctx *context) validateFlags() error {
 	switch {
 	case len(ctx.extensions) == 0:
 		return errors.New("expected at least 1 extension name")
