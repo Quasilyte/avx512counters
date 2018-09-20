@@ -8,6 +8,30 @@ This program utilized Go 1.11 assembler AVX-512 support, extensive end2end test 
 and Linux perf tool to build CSV that records some relevant hardware counter values
 associated with every available AVX-512 instruction form.
 
+## Output format
+
+The output is printed in CSV format.
+
+There are 6 columns:
+
+1. `extension` is a extension this instruction form belongs to
+2. `instruction form` is a combination of operands applied to specific opcode
+3. `class` is a category this instruction form can reach
+4. `level0` shows `core_power.lvl0_turbo_license` hardware counter value
+5. `level1` shows `core_power.lvl1_turbo_license` hardware counter value
+6. `level2` shows `core_power.lvl2_turbo_license` hardware counter value
+
+Example line:
+
+```
+"avx512f","KANDNW K, K, K","turbo0","1249200","0","0"
+```
+
+Example of the complete output is provided in [avx512_core_i9_7000x.csv](/avx512_core_i9_7000x.csv) file.
+
+> **Disclaimer**: provided example is not a reliable reference. The results may vary between
+> collector runs, execution on different machines may lead to other results as well.
+
 ## Requirements
 
 * Go 1.11 or above (AVX-512 support)
@@ -55,27 +79,3 @@ avx512counters -extension=avx512f | tee results.csv
 
 The result CSV is printed to stdout.
 Collection status is printed to stderr.
-
-## Output format
-
-The output is printed in CSV format.
-
-There are 6 columns:
-
-1. `extension` is a extension this instruction form belongs to
-2. `instruction form` is a combination of operands applied to specific opcode
-3. `class` is a category this instruction form can reach
-4. `level0` shows `core_power.lvl0_turbo_license` hardware counter value
-5. `level1` shows `core_power.lvl1_turbo_license` hardware counter value
-6. `level2` shows `core_power.lvl2_turbo_license` hardware counter value
-
-Example line:
-
-```
-"avx512f","KANDNW K, K, K","turbo0","1249200","0","0"
-```
-
-Example of the complete output is provided in [avx512_core_i9_7000x.csv](/avx512_core_i9_7000x.csv) file.
-
-> **Disclaimer**: provided example is not a reliable reference. The results may vary between
-> collector runs, execution on different machines may lead to other results as well.
