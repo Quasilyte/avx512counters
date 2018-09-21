@@ -27,6 +27,16 @@ Example output line:
 "avx512f","KANDNW K, K, K","turbo0","1249200","0","0"
 ```
 
+The `instruction form` can have these argument classes:
+
+* `imm` for immediate (const) argument
+* `K` for opmask registers (K0-K7)
+* `X` for 128-bit vector registers (X0-X31)
+* `Y` for 256-bit vector registers (Y0-Y31)
+* `Z` for 512-bit vector registers (Z0-Z31)
+* `mem` for memory operands, including VSIB
+* `reg` for scalar register operands like AX and CX
+
 Example of the complete output is provided in [avx512_core_i9_7900x.csv](/avx512_core_i9_7900x.csv) file.
 
 > **Disclaimer**: provided example is not a reliable reference. The results may vary between
