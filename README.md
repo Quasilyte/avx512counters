@@ -89,3 +89,22 @@ avx512counters -extension=avx512f | tee results.csv
 
 The result CSV is printed to stdout.
 Collection status is printed to stderr.
+
+Supported extensions:
+* `aes_avx512f`
+* `avx512_4fmaps`
+* `avx512_4vnniw`
+* `avx512_bitalg`
+* `avx512_ifma`
+* `avx512_vbmi`
+* `avx512_vbmi2`
+* `avx512_vnni`
+* `avx512_vpopcntdq`
+* `avx512bw`
+* `avx512cd`
+* `avx512dq`
+* `avx512er`
+* `avx512f`
+* `avx512pf`
+* `gfni_avx512f`
+* `vpclmulqdq_avx512f`
